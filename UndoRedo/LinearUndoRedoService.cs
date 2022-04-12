@@ -1,12 +1,30 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using UndoRedo.Events;
 using UndoRedo.Interfaces;
 
 namespace UndoRedo
 {
-    public class LinearUndoRedoService : IUndoRedoService
+    public partial class LinearUndoRedoService : IUndoRedoService
     {
+        public event EventHandler<CommandPerformedEventArgs> OnCommandDone;
+        public event EventHandler<CommandPerformedEventArgs> OnCommandUndone;
+        public event EventHandler<CommandPerformedEventArgs> OnCommandRedone;
+
         private readonly Stack<IUndoRedoCommand> _undoStack = new Stack<IUndoRedoCommand>();
         private readonly Stack<IUndoRedoCommand> _redoStack = new Stack<IUndoRedoCommand>();
+
+        public IEnumerable<IUndoRedoCommand> Timeline
+        {
+            get
+            {
+                List<IUndoRedoCommand> timeline = new List<IUndoRedoCommand>();
+                timeline.AddRange(_redoStack);
+                timeline.AddRange(_undoStack.Reverse());
+                return timeline;
+            }
+        }
 
         public void Do(IUndoRedoCommand command)
         {
@@ -16,6 +34,8 @@ namespace UndoRedo
 
                 _undoStack.Push(command);
                 _redoStack.Clear();
+                
+                OnCommandDone?.Invoke(this, new CommandPerformedEventArgs(command));
             }
         }
 
@@ -30,6 +50,8 @@ namespace UndoRedo
 
                     _undoStack.Pop();
                     _redoStack.Push(topOfStack);
+                    
+                    OnCommandUndone?.Invoke(this, new CommandPerformedEventArgs(topOfStack));
                 }
             }
         }
@@ -55,6 +77,8 @@ namespace UndoRedo
 
                     _redoStack.Pop();
                     _undoStack.Push(topOfStack);
+
+                    OnCommandRedone?.Invoke(this, new CommandPerformedEventArgs(topOfStack));
                 }
             }
         }
