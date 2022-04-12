@@ -9,8 +9,5 @@
         
         bool CanUndo();
         bool CanRedo();
-
-        IUndoRedoCommand GetNextCommandToBeUndone();
-        IUndoRedoCommand GetNextCommandToBeRedone();
     }
 }
